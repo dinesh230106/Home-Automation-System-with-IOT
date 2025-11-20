@@ -40,18 +40,70 @@ When we apply an active high signal to the signal pin of the relay module from a
 # CIRCUIT DIAGRAM:
 
 <img width="663" height="400" alt="image" src="https://github.com/user-attachments/assets/bfebc70d-25b4-4b4a-a7e1-2a02c09bf423" />
+<img width="450" height="570" alt="image" src="https://github.com/user-attachments/assets/38d4c84d-cb3e-4c86-bc19-a29fc13377ac" />
 
 
  
 # PROGRAM:
-
+```
+#define BLYNK_TEMPLATE_ID "TMPL33AOhHpv3" 
+#define BLYNK_TEMPLATE_NAME "switch light" 
+#define BLYNK_AUTH_TOKEN "oLXGhtWk4j91cXE1q1OG0k_FcZd619vq" 
+#include <ESP8266WiFi.h> 
+#include <Blynk, SimpleEsp8266.h> 
+// WiFi credentials 
+char ssid[] = "Allwin"; 
+char pass[] = "alwn2009"; 
+// Pin definitions for NodeMCU 
+const int relayPins[4] = {D1, D2, D3, D5};  // GPIO pins connected to IN1, IN2, IN3, IN4 on relay module 
+const int switchPins[4] = {D6, D7, 1, 3};  // GPIO1 (TX) for S3 
+// State tracking for switches 
+bool lastSwitchState[4] = {0, 0, 0, 0}; 
+void setup() { 
+Serial.begin(115200); 
+Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass); 
+// Initialize all relay control pins as outputs and set them HIGH to ensure relays are OFF at startup 
+for (int i = 0; i < 4; i++) { 
+pinMode(relayPins[i], OUTPUT); 
+digitalWrite(relayPins[i], HIGH);  // Set HIGH to turn OFF the relays if they are active low 
+pinMode(switchPins[i], INPUT_PULLUP);  // Use internal pull-up resistor 
+} 
+} 
+void loop() { 
+Blynk.run(); 
+for (int i = 0; i < 4; i++) { 
+bool currentSwitchState = !digitalRead(switchPins[i]);  // Read switch state (inverted due to pull-up) 
+// Check if switch state has changed 
+if (currentSwitchState != lastSwitchState[i]) { 
+delay(50);  // Add debounce delay to avoid accidental toggling due to switch noise 
+if (currentSwitchState == !digitalRead(switchPins[i])) {  // Re-check the switch state after delay 
+if (currentSwitchState) { 
+// Toggle relay state 
+digitalWrite(relayPins[i], !digitalRead(relayPins[i])); 
+Blynk.virtualWrite(V1 + i, digitalRead(relayPins[i]) ? 0 : 255);  // Update Blynk app 
+} 
+lastSwitchState[i] = currentSwitchState;  // Update last state 
+} 
+} 
+} 
+} 
+// Blynk app write event handlers for each relay controlled by virtual pins 
+BLYNK_WRITE(V1) { toggleRelay(0, param.asInt()); } 
+BLYNK_WRITE(V2) { toggleRelay(1, param.asInt()); } 
+BLYNK_WRITE(V3) { toggleRelay(2, param.asInt()); } 
+BLYNK_WRITE(V4) { toggleRelay(3, param.asInt()); } 
+void toggleRelay(int relay, int state) { 
+digitalWrite(relayPins[relay], state == 1 ? LOW : HIGH);  // Assume active-low relays 
+}
+```
 
  
 # Output:
 
+https://github.com/user-attachments/assets/e70943d7-846c-43a6-8aae-f626b46b34d9
 
 
 ## Result:
 
-
+Thus, Home Automation System with IOT was successfully implemented using ESP8266.
 
